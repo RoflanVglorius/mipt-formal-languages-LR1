@@ -14,20 +14,16 @@ class LR {
   class Grammar;
   struct StateHasher;
   LR() = default;
+
   class State {
    public:
 
     State() = default;
 
     State(std::string rule_name, std::string rule, size_t index = 0, char predicted = '$') : str_state(
-        rule_name + rule),
-                                                                                             rule_name(std::move(
-                                                                                                 rule_name)),
-                                                                                             rule(std::move(rule)),
-                                                                                             index(index),
-                                                                                             predicted(predicted) {
-
+        rule_name + rule), rule_name(std::move(rule_name)), rule(std::move(rule)), index(index), predicted(predicted) {
     }
+
     bool operator==(const State &other) const {
       return index == other.index && predicted == other.predicted && rule == other.rule && rule_name == other.rule_name;
     }
