@@ -7,15 +7,66 @@
 
 class LR {
  private:
-  struct NodeHasher;
   class Automaton;
-  class Node;
+  struct State;
+
  public:
   class Grammar;
-  struct StateHasher;
   LR() = default;
 
-  class State {
+  class Grammar {
+   public:
+
+    Grammar() = default;
+
+    Grammar(std::unordered_set<char> terminals, std::unordered_set<char> non_terminals)
+        : terminals(std::move(terminals)), non_terminals(std::move(non_terminals)) {
+    }
+
+    void InsertRule(const std::string &rule) {
+      if (rule.size() <= 3) {
+        states.emplace_back(rule.substr(0, 1), "");
+      }
+      states.emplace_back(rule.substr(0, 1), rule.substr(3, rule.size() - 3));
+    }
+
+    void SetStart(std::string start) {
+      states.emplace_back("#", std::move(start));
+      start_state = &states.back();
+      non_terminals.insert('#');
+    }
+
+    const State &GetStart() {
+      return *start_state;
+    }
+
+    const std::vector<State> &GetStates() {
+      return states;
+    }
+
+    const std::unordered_set<char> &GetTerminals() {
+      return terminals;
+    }
+
+   private:
+    std::vector<State> states;
+    std::unordered_set<char> terminals;
+    std::unordered_set<char> non_terminals;
+    State *start_state = nullptr;
+  };
+
+  void Fit(Grammar G);
+  bool Predict(const std::string &word);
+
+ private:
+
+  class bad_grammar_exception : public std::runtime_error {
+   public:
+    bad_grammar_exception() : std::runtime_error("Input grammar is not LR(1)-grammar") {
+    }
+  };
+
+  struct State {
    public:
 
     State() = default;
@@ -32,11 +83,6 @@ class LR {
       return !(*this == other);
     }
 
-   private:
-    friend StateHasher;
-    friend Automaton;
-    friend Node;
-
     std::string str_state;
     std::string rule_name;
     std::string rule;
@@ -50,56 +96,13 @@ class LR {
     }
   };
 
-  class Grammar {
-   public:
-
-    Grammar() = default;
-
-    Grammar(std::unordered_set<char> terminals, std::unordered_set<char> non_terminals)
-        : terminals(std::move(terminals)), non_terminals(std::move(non_terminals)) {
-    }
-
-    void InsertRule(const std::string &rule) {
-      if (rule.size() <= 3) {
-        states.push_back(State(rule.substr(0, 1), ""));
-      }
-      states.push_back(State(rule.substr(0, 1), rule.substr(3, rule.size() - 3)));
-    }
-
-    void SetStart(std::string start) {
-      start_state = State("#", start);
-      non_terminals.insert('#');
-    }
-
-    const State &GetStart() {
-      return start_state;
-    }
-   private:
-    friend Automaton;
-    std::vector<State> states;
-    std::unordered_set<char> terminals;
-    std::unordered_set<char> non_terminals;
-    State start_state;
-  };
-
-  void Fit(Grammar G);
-  bool Predict(const std::string &word);
-
- private:
-
-  class bad_grammar_exception : public std::runtime_error {
-   public:
-    bad_grammar_exception() : std::runtime_error("Input grammar is not LR(1)-grammar") {
-    }
-  };
-
   class Automaton {
 
    public:
 
     Automaton() = default;
 
-    Automaton(Grammar grammar) : grammar(std::move(grammar)) {
+    explicit Automaton(Grammar grammar) : grammar(std::move(grammar)) {
 
     }
 
@@ -122,7 +125,6 @@ class LR {
       term_node = node_to_number[nodes.find(start)->edges.find(start_state.rule[0])->second];
       start_node = node_to_number[(*nodes.find(start))];
       BuildTable(start_node);
-      return;
     }
 
     bool Predict(std::string word) {
@@ -165,7 +167,7 @@ class LR {
 
    private:
 
-    class Node {
+    struct Node {
      public:
       bool operator==(const Node &other) const {
         return other.states == states;
@@ -175,9 +177,6 @@ class LR {
         return !(*this == other);
       }
 
-     private:
-      friend NodeHasher;
-      friend Automaton;
       std::unordered_set<State, StateHasher> states;
       std::map<char, Node> edges;
       std::unordered_map<char, const Node *> real_edges;
@@ -200,14 +199,14 @@ class LR {
       }
       if (current_rule.rule.empty()) {
         return {'$'};
-      } else if (grammar.terminals.count(current_rule.rule[current_rule.index]) != 0) {
+      } else if (grammar.GetTerminals().count(current_rule.rule[current_rule.index]) != 0) {
         return {current_rule.rule[current_rule.index]};
       } else {
         being_processed.insert(current_rule);
         std::unordered_set<char> closest_terms;
-        for (const auto &gr_rule : grammar.states) {
+        for (const auto &gr_rule : grammar.GetStates()) {
           if (current_rule.rule[current_rule.index] == gr_rule.rule_name[0]) {
-            if (gr_rule.rule.empty() || grammar.terminals.count(current_rule.rule[current_rule.index]) != 0) {
+            if (gr_rule.rule.empty() || grammar.GetTerminals().count(current_rule.rule[current_rule.index]) != 0) {
               closest_terms.insert(gr_rule.rule.empty() ? '$' : current_rule.rule[current_rule.index]);
             } else if (gr_rule != current_rule) {
               std::unordered_set<char>
@@ -238,7 +237,7 @@ class LR {
         changed = false;
         std::unordered_set<State, StateHasher> copy_states = to_process.states;
         for (const auto &state : copy_states) {
-          for (const auto &gr_rule : grammar.states) {
+          for (const auto &gr_rule : grammar.GetStates()) {
             if (state.index != state.rule.size()) {
               State next_node_state = state;
               ++next_node_state.index;
@@ -246,7 +245,7 @@ class LR {
               if (state.rule[state.index] == gr_rule.rule_name[0]) {
                 State new_state = gr_rule;
                 if (state.index + 1 != state.rule.size()) {
-                  if (grammar.terminals.count(state.rule[state.index + 1]) != 0) {
+                  if (grammar.GetTerminals().count(state.rule[state.index + 1]) != 0) {
                     new_state.predicted = state.rule[state.index + 1];
                   } else {
                     std::unordered_set<State, StateHasher> being_processed;
@@ -322,8 +321,8 @@ class LR {
     std::vector<std::unordered_map<char, std::pair<std::string, int64_t>>> lr_table;
     std::unordered_map<Node, int64_t, NodeHasher> node_to_number;
     std::vector<Node> number_to_node;
-    int64_t start_node;
-    int64_t term_node;
+    int64_t start_node = -1;
+    int64_t term_node = -1;
   };
 
   Automaton LR_automaton;
