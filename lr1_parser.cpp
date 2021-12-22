@@ -60,6 +60,9 @@ class LR {
     }
 
     void InsertRule(const std::string &rule) {
+      if (rule.size() <= 3) {
+        states.push_back(State(rule.substr(0, 1), ""));
+      }
       states.push_back(State(rule.substr(0, 1), rule.substr(3, rule.size() - 3)));
     }
 
@@ -375,7 +378,7 @@ int main() {
   std::cout << "Insert your words:\n";
   std::string word;
   for (int64_t i = 0; i < words_amount; ++i) {
-    std::cin >> word;
+    std::getline(std::cin, word);
     std::cout << (parser.Predict(word) ? "Yes\n" : "No\n");
   }
   return 0;
