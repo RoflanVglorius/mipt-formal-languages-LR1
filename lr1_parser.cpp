@@ -60,7 +60,7 @@ class LR {
     }
 
     void InsertRule(const std::string &rule) {
-      states.insert(State(rule.substr(0, 1), rule.substr(3, rule.size() - 3)));
+      states.push_back(State(rule.substr(0, 1), rule.substr(3, rule.size() - 3)));
     }
 
     void SetStart(std::string start) {
@@ -73,7 +73,7 @@ class LR {
     }
    private:
     friend Automaton;
-    std::unordered_set<State, StateHasher> states;
+    std::vector<State> states;
     std::unordered_set<char> terminals;
     std::unordered_set<char> non_terminals;
     State start_state;
@@ -376,7 +376,7 @@ int main() {
   std::string word;
   for (int64_t i = 0; i < words_amount; ++i) {
     std::cin >> word;
-    std::cout << (parser.Predict(word) ? "Yes" : "No");
+    std::cout << (parser.Predict(word) ? "Yes\n" : "No\n");
   }
   return 0;
 }
