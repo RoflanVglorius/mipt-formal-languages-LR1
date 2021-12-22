@@ -377,6 +377,7 @@ int main() {
   std::cin >> words_amount;
   std::cout << "Insert your words:\n";
   std::string word;
+  std::getline(std::cin, word);
   for (int64_t i = 0; i < words_amount; ++i) {
     std::getline(std::cin, word);
     std::cout << (parser.Predict(word) ? "Yes\n" : "No\n");
