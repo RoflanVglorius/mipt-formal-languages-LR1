@@ -1,26 +1,25 @@
 # mipt-formal-languages-LR1
 
-Класс ```State``` - состояния вида ```A -> .aB```.  
-Класс ```Grammar``` - грамматика.  
-Класс ```Automaton``` - детерменированный конечный автомат на множествах состояний.  
+Class ```State``` - state of the type ```A -> .aB```.  
+Class ```Grammar``` - grammar.  
+Class ```Automaton``` - deterministic finite automaton.  
   
-Поля класса ```Automaton```:
-1) ```nodes``` - вершины автомата.  
-2) ```grammar``` - грамматика.
-3) ```processed``` - множество для поддержания обработанных вершин при построении.
-4) ```built``` - множество для поддержания обработанных ситуация при построении таблицы.
-5) ```lr_table``` - таблица переходов.
-6) ```node_to_number``` - отображение из вершины в её номер.
-7) ```number_to_node``` - отображение из номера в вершину.
-8) ```start_node``` - стартовая вершина.
-9) ```term_node``` - терминальная вершина.
+   ```Automaton``` class fields:
+1) ```nodes``` - nodes of the automaton.  
+2) ```grammar``` - grammar.
+3) ```processed``` - set of processed nodes while building the automaton.
+4) ```built``` - set of processed states while building the table.
+5) ```lr_table``` - table of transitions.
+6) ```node_to_number``` - mapping from a node to its number.
+7) ```number_to_node``` - mapping from a number to node.
+8) ```start_node``` - starting node.
+9) ```term_node``` - terminal node.
   
     
     
-Методы класса ```Automaton```:
-1) ```Build``` - основной метод, запускающий построение автомата.
-2) ```ProcessNode``` - метод, раскрывающий все ```States``` в вершине и добавляющий ребра в вершины.
-3) ```EnumerateNodes``` - метод, нумерующий вершины.  
-4) ```ProcessClosestTerminals``` - метод, возвращающий множество всех ближайших терминалов в дереве вывода.
-5) ```BuildTable``` - метод, строящий таблицу.
-6) ```Predict``` - аналогично требуемому методу ```Predict```.
+```Automaton``` class methods:
+1) ```Build``` - runs automaton build.
+2) ```ProcessNode``` - evaluates ```States``` in the node and adds edges.
+3) ```EnumerateNodes``` - enumerates nodes.  
+4) ```ProcessClosestTerminals``` - returns all closest terminal nodes from the derivation tree.
+5) ```BuildTable``` - builds the table.
